@@ -1,3 +1,8 @@
+/**
+ * @author Ludwing Pérez
+ * march 2019
+ * https://github.com/ludwingperezt/dependant-selects
+ */
 function initDependentSelects(parentSelector, 
     childSelector, 
     parentData,
@@ -21,14 +26,7 @@ function initDependentSelects(parentSelector,
         filterChild(childSelector, parentKey, childData);
     });
 
-    // Pre-select child value if parent has a selected value
-    if (parentSelectedValue) {
-        filterChild(childSelector, parentSelectedValue, childData);
-
-        if (childSelectedValue) {
-            childElement.val(childSelectedValue).trigger('change.select2');
-        }
-    }
+    setInitialSelectedValues(parentSelector, childSelector, parentSelectedValue, childSelectedValue, childData);
 }
 
 function initSelects(parentSelector, 
@@ -50,14 +48,7 @@ function initSelects(parentSelector,
         filterChild(childSelector, parentKey, childConfig.data);
     });
 
-    // Pre-select child value if parent has a selected value
-    if (parentSelectedValue) {
-        filterChild(childSelector, parentSelectedValue, childConfig.data);
-
-        if (childSelectedValue) {
-            childElement.val(childSelectedValue).trigger('change.select2');
-        }
-    }
+    setInitialSelectedValues(parentSelector, childSelector, parentSelectedValue, childSelectedValue, childConfig.data);
 }
 
 function searchChildElements(parentKey, list) {
@@ -79,4 +70,45 @@ function filterChild(childSelector, parentKey, list, placeholder='--') {
     var filtered = searchChildElements(parentKey, list);
     filtered.splice(0,0,{id:'', text: placeholder});
     populateChild(childSelector, filtered);
+}
+
+function searchElement(key, list) {
+    var found_elements = list.filter(function(val){
+        return val.id === parseInt(key);
+    });
+    return found_elements;
+}
+
+function setChildElements(childSelector, childElements, parentSelectedValue, childSelectedValue) {
+    var childElement = $(childSelector);
+    filterChild(childSelector, parentSelectedValue, childElements);
+
+    if (childSelectedValue) {
+        childElement.val(childSelectedValue).trigger('change.select2');
+    }
+}
+
+function setInitialSelectedValues(parentSelector, childSelector, parentSelectedValue, childSelectedValue, childData) {
+    var parentElement = $(parentSelector);
+    if (!parentSelectedValue && childSelectedValue) {
+        // Pre-select parent and child value if child value exists
+
+        // Find the (list) child selected element
+        var elements_found = searchElement(childSelectedValue, childData);
+
+        if (elements_found.length > 0) {
+            // Get the parent ID of the first (only) selected element
+            var parent_id = elements_found[0].parentID;
+
+            // Set the selected parent element
+            parentElement.val(parent_id).trigger('change.select2');
+
+            // Re-set the child element
+            setChildElements(childSelector, childData, parent_id, childSelectedValue);
+        }
+    }
+    else {
+        // Pre-select child value if parent has a selected value
+        setChildElements(childSelector, childData, parentSelectedValue, childSelectedValue);
+    }
 }
